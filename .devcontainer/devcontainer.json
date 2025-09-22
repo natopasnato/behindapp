@@ -1,0 +1,25 @@
+{
+  "name": "Flutter Development Environment",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dart-code.flutter",
+        "dart-code.dart-code",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "dart.flutterSdkPath": "/opt/flutter",
+        "dart.sdkPath": "/opt/flutter/bin/cache/dart-sdk"
+      }
+    }
+  },
+  "forwardPorts": [8080, 3000],
+  "postCreateCommand": "flutter doctor -v",
+  "remoteUser": "root",
+  "workspaceFolder": "/workspace"
+}

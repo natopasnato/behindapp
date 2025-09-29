@@ -32,6 +32,9 @@ RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/sta
     | tar -xJ -C /opt
 ENV PATH=$PATH:$FLUTTER_HOME/bin
 
+# Taskツールのインストール
+RUN curl -sL https://taskfile.dev/install.sh | sh -s -- -b /usr/local/bin
+
 # Precache and verify (stabilize Flutter SDK state)
 RUN git config --global --add safe.directory /opt/flutter \
     && if [ -d /opt/flutter/.git ]; then git -C /opt/flutter remote set-url origin https://github.com/flutter/flutter.git; fi \

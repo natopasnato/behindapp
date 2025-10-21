@@ -1,0 +1,157 @@
+
+
+
+2. TIME_WAITの状況確認
+TIME_WAITの数を確認
+(netstat -an | findstr :5037 | findstr TIME_WAIT).Count
+
+
+adbプロセスの確認
+adbプロセスが動作しているか確認しましょう：
+tasklist | findstr adb
+
+time_waitの確認
+netstat -an | findstr :5037 | findstr TIME_WAIT
+
+adbサーバーがまだ動作しているか確認しましょう
+ →LISTENINGしているものを確認
+netstat -ano | findstr :5037 | findstr LISTENING
+  TCP         0.0.0.0:5037           0.0.0.0:0              LISTENING       4580
+
+
+
+
+
+
+
+#######################################################################################
+PS C:\WINDOWS\system32> (netstat -an | findstr :5037 | findstr TIME_WAIT).Count
+0
+
+
+
+
+
+##############################################
+なんか、TIME_WAITがめちゃくちゃ発生する件について
+
+PS C:\WINDOWS\system32> netstat -ano | findstr :5037 | findstr LISTENING
+  TCP         0.0.0.0:5037           0.0.0.0:0              LISTENING       5580
+より、5580ポートでLITENINGする
+
+じゃあ、これで
+PS C:\WINDOWS\system32> netstat -ano | findstr 5580を見たとkい
+  TCP         0.0.0.0:5037           0.0.0.0:0              LISTENING       5580
+  TCP         0.0.0.0:8181           0.0.0.0:0              LISTENING       5580
+  UDP         127.0.0.1:49664        127.0.0.1:49664                        5580
+  なんか、複数使っている
+
+
+PS C:\WINDOWS\system32> tasklist /svc /fi "PID eq 5580"
+
+イメージ名                     PID サービス
+========================= ======== ============================================
+svchost.exe                   5580 iphlpsvc
+なんだこれ、ってのになって
+
+判明しました！PID 5580はiphlpsvc（IP Helper Service）
+とのこと
+で、
+iphlpsvcとは
+IP Helper Serviceは、IPv6トンネリングやその他のネットワーク機能を提供するWindowsサービスです。
+通常はポート5037を使用しませんが、netsh int ipv4 resetコマンドを実行した後、設定が壊れた可能性があります。
+
+とのこと、
+なんだそりゃ、意味がわからんぞ
+
+とにかく、
+重要な事実
+1. iphlpsvcは通常ポート5037を使わない
+iphlpsvcのデフォルトポートは5037ではない
+
+じゃあ、何ポートがデフォルトなんだよ
+
+iphlpsvcのデフォルトポート
+結論
+iphlpsvcには固定のデフォルトポートはありません。
+とのこと、よくわかんねーな
+とりあえず、
+Stop-Service iphlpsvc
+で止めてみる
+
+で一応確認
+TIME_WAITの確認コマンド
+1. TIME_WAITの数を確認
+(netstat -an | findstr :5037 | findstr TIME_WAIT).Count
+2. TIME_WAITの詳細を確認
+netstat -an | findstr :5037 | findstr TIME_WAIT
+3. ポート5037の全体状況を確認
+netstat -ano | findstr :5037
+4. adbサーバーがリッスンしているか確認
+netstat -ano | findstr :5037 | findstr LISTENING
+
+
+結果
+PS C:\WINDOWS\system32> (netstat -an | findstr :5037 | findstr TIME_WAIT).Count
+0
+PS C:\WINDOWS\system32> netstat -an | findstr :5037 | findstr TIME_WAIT
+PS C:\WINDOWS\system32> netstat -ano | findstr :5037 | findstr LISTENING
+  TCP         0.0.0.0:5037           0.0.0.0:0              LISTENING       27392
+PS C:\WINDOWS\system32> netstat -ano | findstr :5037 | findstr LISTENING
+  TCP         0.0.0.0:5037           0.0.0.0:0              LISTENING       27392
+
+となった
+
+
+PS C:\WINDOWS\system32> & $adb -a start-server
+* daemon not running; starting now at tcp:5037
+* daemon started successfully
+
+で成功したみたいで、adbサーバーが起動したってことでいいんかな
+ホスト側（僕のPC側だな）
+
+
+そのあと、
+1. エミュレーターが認識されているか確認
+PS C:\WINDOWS\system32> & $adb devices
+List of devices attached
+（空）
+
+なぜだ、、、
+andorodostudioの起動忘れみたいだ
+
+エミュレーター起動後（GUIで）
+以下みたいに行けたみたいだな
+PS C:\WINDOWS\system32> & $adb devices
+List of devices attached
+emulator-5554   device
+
+
+
+※iphlpsvc確認
+1. iphlpsvcを再開
+Start-Service iphlpsvc
+PS C:\WINDOWS\system32> Get-Service iphlpsvc | Select-Object -Property Name, Status
+Name      Status
+----      ------
+iphlpsvc Running
+
+PS C:\WINDOWS\system32> tasklist /svc /fi "SERVICES eq iphlpsvc"
+
+イメージ名                     PID サービス
+========================= ======== ============================================
+svchost.exe                  14788 iphlpsvc
+PS C:\WINDOWS\system32>
+
+
+※adbサーバが動いているか確認
+List of devices attached
+PS C:\WINDOWS\system32> & $adb devices
+List of devices attached
+emulator-5554   device
+
+
+動いているな
+結局今までさぼってきたけど、ポートがかぶっていてwindows側のadbサーバにコンテナからの接続がループしていたのは、windows側のサービスがポート3037を使っていたため、
+コンテナから接続できないでいるのが原因だったと思える
+なぜこれにこんな時間かかるんだ、、、うそん、、

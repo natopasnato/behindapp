@@ -18,6 +18,12 @@
       }
     }
   },
+  "containerEnv": {
+    "ANDROID_ADB_SERVER_HOST": "host.docker.internal",
+    "ANDROID_ADB_SERVER_PORT": "5037",
+    "ADB_INSTALL_TIMEOUT": "60",
+    "FLUTTER_SUPPRESS_ANALYTICS": "true"
+  },
   "runArgs": ["--name", "behindapp-dev"],
   "forwardPorts": [8080, 3000],
   "postCreateCommand": "flutter doctor -v",

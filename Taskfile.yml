@@ -6,12 +6,16 @@ tasks:
       - task -l
 
   dev:
-    desc: エミュレーターでアプリ実行
+    desc: エミュレーターでアプリ実行（ホットリロード対応）
+    dir: app
     cmds:
-      - cd app
+      # 環境変数設定
       - export ANDROID_ADB_SERVER_HOST=${ANDROID_ADB_SERVER_HOST:-host.docker.internal}
       - export ANDROID_ADB_SERVER_PORT=${ANDROID_ADB_SERVER_PORT:-5037}
-      - flutter run
+      # VM Service用トンネル設定（ホットリロードのために必要）
+      - adb -H host.docker.internal -P 5037 reverse tcp:8181 tcp:8181
+      # アプリ実行（VM Serviceポート固定でホットリロード有効化）
+      - flutter run -d emulator-5554 --host-vmservice-port=8181 --device-vmservice-port=8181 --disable-service-auth-codes
 
   flutter:devices:
     desc: 接続デバイス確認
@@ -126,8 +130,8 @@ tasks:
     desc: 環境設定確認
     cmds:
       - echo "=== 環境変数確認 ==="
-      - echo "ANDROID_ADB_SERVER_HOST: $ANDROID_ADB_SERVER_HOST"
-      - echo "ANDROID_ADB_SERVER_PORT: $ANDROID_ADB_SERVER_PORT"
+      - echo "ANDROID_ADB_SERVER_HOST:"
+      - echo "ANDROID_ADB_SERVER_PORT:"
       - echo ""
       - echo "=== ADB接続確認 ==="
       - adb -H host.docker.internal -P 5037 devices
@@ -142,7 +146,6 @@ tasks:
       - task: env:setup
       - echo "環境変数設定完了"
       - echo "新しいターミナルを開いてください"
-      - echo "または: source ~/.bashrc"
 
   help:
     desc: ヘルプ表示

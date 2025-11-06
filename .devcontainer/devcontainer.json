@@ -14,7 +14,10 @@
       ],
       "settings": {
         "dart.flutterSdkPath": "/opt/flutter",
-        "dart.sdkPath": "/opt/flutter/bin/cache/dart-sdk"
+        "dart.sdkPath": "/opt/flutter/bin/cache/dart-sdk",
+        "files.associations": {
+          "launch.json": "json"
+        }
       }
     }
   },

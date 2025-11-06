@@ -1,0 +1,15 @@
+{
+  "files.associations": {
+    "launch.json": "json",
+    "*.launch.json": "json"
+  },
+  "debug.internalConsoleOptions": "neverOpen",
+  "debug.allowBreakpointsEverywhere": false,
+  "extensions.ignoreRecommendations": true,
+  "debug.showInStatusBar": "onFirstSessionStart",
+  "dart.pubAdditionalArgs": [],
+  "dart.analysisExcludedFolders": [],
+  "dart.autoImport": true,
+  "dart.enableSdkFormatter": true,
+  "dart.analysisServerFolding": true
+}
